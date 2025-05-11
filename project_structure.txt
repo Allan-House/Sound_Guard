@@ -1,0 +1,8 @@
+project_name/
+├── include/                # Public header files
+├── src/                    # Source files
+├── build/                  # Build artifacts (object files, executables)
+├── test/                   # Test files
+├── doc/                    # Project documentation
+├── CMakeLists.txt          # Build file for CMake
+└── README.md               # Project description
