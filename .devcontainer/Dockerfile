@@ -4,15 +4,20 @@ FROM ubuntu:22.04
 # Atualiza pacotes e instala ferramentas necessárias
 RUN apt update && apt install -y \
     build-essential \
+    gcc \
+    g++ \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     cmake \
     make \
     git \
+    wget \
+    ssh \
     nano \
     vim \
-    gdb-multiarch \
     pkg-config \
+    #
+    gdb-multiarch \
     libssl-dev \
     curl \
     ca-certificates \
@@ -22,8 +27,8 @@ RUN apt update && apt install -y \
     libi2c-dev
 
 # Define o compilador padrão para ARM 32-bit
-ENV CC=arm-linux-gnueabihf-gcc
-ENV CXX=arm-linux-gnueabihf-g++
+ENV CC=gcc-arm-linux-gnueabihf
+ENV CXX=g++-arm-linux-gnueabihf
 
 # Adiciona configurações para I2C
 RUN echo "i2c-dev" >> /etc/modules && \
