@@ -7,7 +7,7 @@
 #define LED_GPIO 17       // GPIO 17 (pino físico 11), modo BCM usado pelo wiringPiSetupGpio()
 #define ADS1115_ADDR 0x48 // Endereço padrão do ADS1115 no barramento I2C
 #define CONVERSION_DELAY 8000 // 8ms para conversão a 128 SPS
-#define LOOP_DELAY 50000 // 50ms entre leituras
+#define LOOP_DELAY 5000 // 5ms entre leituras
 
 // Configuração do ADS1115:
 // - Bit 15: Iniciar conversão single-shot (1)

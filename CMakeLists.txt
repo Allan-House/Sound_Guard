@@ -1,25 +1,32 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 # Project metadata
-project(Sound_Guard)
-message("Project Name: ${PROJECT_NAME}")
+project(Sound_Guard C)
 
-# Project paths
-message("Source Dir: ${CMAKE_SOURCE_DIR}")
-message("Binary Dir: ${CMAKE_BINARY_DIR}")
+message(STATUS "Project Name: ${PROJECT_NAME}")
+message(STATUS "Source Dir: ${CMAKE_SOURCE_DIR}")
+message(STATUS "Binary Dir: ${CMAKE_BINARY_DIR}")
 
-# C++ standard settings
-set(CMAKE_C_STANDARD 20)
-set(CMAKE_C_STANDARD_REQUIRED TRUE)
+# C standard settings
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Output directory configuration
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Header files path
+# Header files
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Source files path
-file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
+include_directories(${CMAKE_SOURCE_DIR}/3rdparty/WiringPi/wiringpi)
 
-# Define the executable target with the collected source files
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
+# Source files
+file(GLOB SOURCES
+    ${CMAKE_SOURCE_DIR}/src/*.c
+)
+
+# Executável
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+target_link_libraries(${PROJECT_NAME}
+    ${CMAKE_SOURCE_DIR}/3rdparty/pre-compiled-libs/libwiringpi.a
+)

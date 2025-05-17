@@ -6,8 +6,8 @@ RUN apt update && apt install -y \
     build-essential \
     gcc \
     g++ \
-    gcc-arm-linux-gnueabihf \
-    g++-arm-linux-gnueabihf \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
     cmake \
     make \
     git \
@@ -27,8 +27,8 @@ RUN apt update && apt install -y \
     libi2c-dev
 
 # Define o compilador padrão para ARM 32-bit
-ENV CC=gcc-arm-linux-gnueabihf
-ENV CXX=g++-arm-linux-gnueabihf
+ENV CC=gcc-aarch64-linux-gnu
+ENV CXX=g++-aarch64-linux-gnu
 
 # Adiciona configurações para I2C
 RUN echo "i2c-dev" >> /etc/modules && \
