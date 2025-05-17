@@ -39,30 +39,38 @@ int main() {
     printf("Iniciando leitura...\n");
     printf("Pressione Ctrl+C encerrar.\n");
 
-    float smoothedRMS = 0.0f;
-
     while (1) {
         float sumSquares = 0.0f;
 
         for (int i = 0; i < NUM_SAMPLES; i++) {
+            // Envia o comando de configuração para o ADS1115 e espera a conversão
             wiringPiI2CWriteReg16(handle, 0x01, (ADS1115_CONFIG >> 8) | (ADS1115_CONFIG << 8));
             usleep(CONVERSION_DELAY);
 
             int16_t value = wiringPiI2CReadReg16(handle, 0x00);
             value = ((value & 0xFF00) >> 8) | ((value & 0x00FF) << 8);
 
+            // Calcula o valor da tensão do sinal
             float voltage = (value / 32768.0f) * 4.096f;
+
+            // Remove o offset DC do MAX9814
             float ac_voltage = voltage - DC_OFFSET;
+
+            // Soma os quadrados das tensões amostradas para cálculo do RMS
             sumSquares += ac_voltage * ac_voltage;
         }
 
+        // Calcula o valor RMS do sinal
         float rms = sqrt(sumSquares / NUM_SAMPLES);
-
+        
+        // Normaliza o sinal com base no RMS de uma senóide de pico 1V (0 = silencioso, 1 = máximo) e a limita
         float normalized = rms / MAX_RMS;
         if (normalized > 1.0f) normalized = 1.0f;
 
+        // Cálculo do valor dBFS do sinal RMS
         float dbfs = 20.0f * log10((rms > 0.0001f ? rms : 0.0001f) / MAX_RMS);
 
+        // Calcula o comprimento da barra e a imprime com os valores de RMS e dBFS
         int barLength = (int)(normalized * BAR_WIDTH);
 
         printf("Volume: ");
