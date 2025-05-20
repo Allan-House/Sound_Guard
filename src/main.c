@@ -16,11 +16,15 @@
 // Configuração do ADS1115:
 // - Bit 15: Iniciar conversão single-shot (1)
 // - Bits 14-12: Canal AIN0 (100)
-// - Bits 11-9: Ganho ±4.096V (010)
+// - Bits 11-9: Ganho ±2.048V (010)
 // - Bit 8: Modo single-shot (1)
 // - Bits 7-5: Data rate 250 SPS (101)
 // - Bits 4-0: Comparator disabled (00011)
 #define ADS1115_CONFIG 0b1100010110100011
+
+int16_t swap_bytes(int16_t val) {
+    return (val << 8) | ((val >> 8) & 0xFF);   
+}
 
 int main() {
     // Inicializa a biblioteca WiringPi para usar numeração BCM (GPIO direto)
@@ -48,16 +52,19 @@ int main() {
             usleep(CONVERSION_DELAY);
 
             int16_t value = wiringPiI2CReadReg16(handle, 0x00);
-            value = ((value & 0xFF00) >> 8) | ((value & 0x00FF) << 8);
+            value = swap_bytes(value);
 
             // Calcula o valor da tensão do sinal
-            float voltage = (value / 32768.0f) * 4.096f;
+            float voltage = (value / 32768.0f) * 2.048f;
 
             // Remove o offset DC do MAX9814
             float ac_voltage = voltage - DC_OFFSET;
 
             // Soma os quadrados das tensões amostradas para cálculo do RMS
             sumSquares += ac_voltage * ac_voltage;
+
+            // Teste
+            // printf("Raw: %6d | V: %1.3f | AC: %1.3f\n", value, voltage, ac_voltage);
         }
 
         // Calcula o valor RMS do sinal
@@ -69,7 +76,7 @@ int main() {
 
         // Cálculo do valor dBFS do sinal RMS
         float dbfs = 20.0f * log10((rms > 0.0001f ? rms : 0.0001f) / MAX_RMS);
-
+        
         // Calcula o comprimento da barra e a imprime com os valores de RMS e dBFS
         int barLength = (int)(normalized * BAR_WIDTH);
 
@@ -81,7 +88,7 @@ int main() {
                 printf(" ");
         }
         printf(" | RMS: %5.3f V | dBFS: %6.1f dB\n", rms, dbfs);
-
+        
         fflush(stdout);
 
         usleep(16670); // atualização de 16.67ms ~60 FPS
