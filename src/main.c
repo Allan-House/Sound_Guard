@@ -34,6 +34,8 @@ int main() {
         return -1;
     }
     
+    pinMode(LED_GPIO, OUTPUT);
+
     // Abre a comunicação I2C com o ADS1115
     int handle = wiringPiI2CSetup(ADS1115_ADDR);
     if (handle < 0) {
@@ -44,6 +46,7 @@ int main() {
     printf("Iniciando leitura...\n");
     printf("Pressione Ctrl+C encerrar.\n");
 
+    float dbfs_limit = -12.0f;
     float dbfs_sum = 0.0f;
     float dbfs_avg = 0.0f;
     int count = 0;
@@ -107,7 +110,15 @@ int main() {
             dbfs_avg = dbfs_sum / 32;
             dbfs_sum = 0;
             count = 0;
-            //printf("Average dBFS: %6.1f\n", dbfs_avg);
+            printf("Average dBFS: %6.1f\n", dbfs_avg);
+
+            if (dbfs_avg > dbfs_limit) {
+                printf("Ligando o LED...\n");
+                digitalWrite(LED_GPIO, HIGH);               
+            } else {
+                printf("Desligando o LED...\n");
+                digitalWrite(LED_GPIO, LOW);
+            }
         }
 
         usleep(16670); // atualização de 16.67ms ~60 FPS
