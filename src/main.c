@@ -44,6 +44,10 @@ int main() {
     printf("Iniciando leitura...\n");
     printf("Pressione Ctrl+C encerrar.\n");
 
+    float dbfs_sum = 0.0f;
+    float dbfs_avg = 0.0f;
+    int count = 0;
+
     while (1) {
         float sumSquares = 0.0f;
 
@@ -94,23 +98,20 @@ int main() {
         printf(" | RMS: %5.3f V | dBFS: %6.1f dB\n", rms, dbfs);
         
         fflush(stdout);
+        
+        dbfs_sum += dbfs;
+        count++;
+
+        if (!(count <= 31)) {
+            // Calcula a média
+            dbfs_avg = dbfs_sum / 32;
+            dbfs_sum = 0;
+            count = 0;
+            //printf("Average dBFS: %6.1f\n", dbfs_avg);
+        }
 
         usleep(16670); // atualização de 16.67ms ~60 FPS
     }
-
-    /*
-    // Configura o pino do LED como saída
-    pinMode(LED_GPIO, OUTPUT);
-
-    // Liga o LED por 2 segundos
-    printf("Acendendo LED...\n");
-    digitalWrite(LED_GPIO, HIGH);
-    sleep(2);
-
-    // Desliga o LED
-    printf("Apagando o LED.\n");
-    digitalWrite(LED_GPIO, LOW);
-    */
 
     return 0;
 }
