@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <signal.h>
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
 
@@ -23,6 +25,13 @@
 // - Bits 4-0: Comparator disabled (00011)
 #define ADS1115_CONFIG 0b1100010110100011
 
+volatile int keepRunning = 1;
+
+// Handler de sinal pra terminação limpa (Ctrl + C)
+void intHandler(int dummy){
+    keepRunning = 0;
+}
+
 int16_t swap_bytes(int16_t val) {
     return (val << 8) | ((val >> 8) & 0xFF);   
 }
@@ -31,17 +40,21 @@ int main() {
     // Inicializa a biblioteca WiringPi para usar numeração BCM (GPIO direto)
     if (wiringPiSetupGpio() < 0) {
         fprintf(stderr, "Erro ao inicializar WiringPi.\n");
-        return -1;
+        return EXIT_FAILURE;
     }
     
+    // Ativa o handling de sinal pra terminação limpa (Ctrl + C)
+    signal(SIGINT, intHandler);
+
     pinMode(LED_GPIO, OUTPUT);
 
     // Abre a comunicação I2C com o ADS1115
     int handle = wiringPiI2CSetup(ADS1115_ADDR);
     if (handle < 0) {
         fprintf(stderr, "Erro ao abrir comunicação I2C com o ADS1115.\n");
-        return 1;
+        return EXIT_FAILURE;
     }
+    
 
     printf("Iniciando leitura...\n");
     printf("Pressione Ctrl+C encerrar.\n");
@@ -50,8 +63,8 @@ int main() {
     float dbfs_sum = 0.0f;
     float dbfs_avg = 0.0f;
     int count = 0;
-
-    while (1) {
+    
+    while (keepRunning) {
         float sumSquares = 0.0f;
 
         for (int i = 0; i < NUM_SAMPLES; i++) {
@@ -124,5 +137,6 @@ int main() {
         usleep(16670); // atualização de 16.67ms ~60 FPS
     }
 
-    return 0;
+    printf("\nTerminando o programa.\n");
+    return EXIT_SUCCESS;
 }
