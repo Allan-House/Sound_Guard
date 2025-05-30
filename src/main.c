@@ -12,11 +12,17 @@
 #define ADS1115_ADDR 0x48       // Endereço padrão do ADS1115 no barramento I2C
 #define CONVERSION_DELAY 4000   // 4ms para conversão a 250 SPS
 #define NUM_SAMPLES 4           // Quantidade de amostragens
-#define BAR_WIDTH 80           // Dimensão da barra visual
+#define BAR_WIDTH 80            // Dimensão da barra visual
 #define MAX_RMS 0.707f          // Nível RMS de referência para 0 dBFS
 #define DC_OFFSET 1.25f         // Offset de tensão do MAX9814
 #define MIN_NORMALIZED 0.001f   // Valor mínimo de escala log, evitando log(0)
 #define TARGET_INTERVAL_NS 33330000  // Intervalo de tempo de ~33.33ms em nanosegundos (30 FPS)
+
+#define LCD_I2C_ADDR 0x27       // Endereço padrão do módulo I2C (PCF8574)
+#define LCD_BACKLIGHT 0x08
+#define LCD_ENABLE    0x04
+#define LCD_CMD       0
+#define LCD_CHR       1
 
 // Configuração do ADS1115:
 // - Bit 15: Iniciar conversão single-shot (1)
@@ -28,6 +34,50 @@
 #define ADS1115_CONFIG 0b1100010110100011
 
 volatile int keepRunning = 1;
+int lcd_fd;
+
+void lcd_toggle_enable(uint8_t bits) {
+    wiringPiI2CWrite(lcd_fd, bits | LCD_ENABLE | LCD_BACKLIGHT);
+    usleep(500);
+    wiringPiI2CWrite(lcd_fd, (bits & ~LCD_ENABLE) | LCD_BACKLIGHT);
+    usleep(100);
+}
+
+void lcd_send_byte(uint8_t bits, int mode) {
+    uint8_t high = mode | (bits & 0xF0) | LCD_BACKLIGHT;
+    uint8_t low  = mode | ((bits << 4) & 0xF0) | LCD_BACKLIGHT;
+    wiringPiI2CWrite(lcd_fd, high);
+    lcd_toggle_enable(high);
+    wiringPiI2CWrite(lcd_fd, low);
+    lcd_toggle_enable(low);
+}
+
+void lcd_init() {
+    lcd_fd = wiringPiI2CSetup(LCD_I2C_ADDR);
+    if (lcd_fd < 0) {
+        fprintf(stderr, "Erro ao inicializar LCD I2C.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    usleep(50000);                // Espera >40ms após VCC
+    lcd_send_byte(0x33, LCD_CMD); // Inicialização
+    lcd_send_byte(0x32, LCD_CMD); // Define para 4 bits
+    lcd_send_byte(0x28, LCD_CMD); // 2 linhas, 5x8 matriz
+    lcd_send_byte(0x0C, LCD_CMD); // Display on, cursor off
+    lcd_send_byte(0x06, LCD_CMD); // Incrementa cursor
+    lcd_send_byte(0x01, LCD_CMD); // Limpa display
+    usleep(2000);
+}
+
+void lcd_write(const char *line1, const char *line2) {
+    lcd_send_byte(0x80, LCD_CMD);  // Linha 1
+    for (int i = 0; i < 16 && line1[i]; i++)
+        lcd_send_byte(line1[i], LCD_CHR);
+
+    lcd_send_byte(0xC0, LCD_CMD);  // Linha 2
+    for (int i = 0; i < 16 && line2[i]; i++)
+        lcd_send_byte(line2[i], LCD_CHR);
+}
 
 // Handler de sinal pra terminação limpa (Ctrl + C)
 void intHandler(int dummy){
@@ -54,6 +104,9 @@ int main() {
     signal(SIGINT, intHandler);
 
     pinMode(LED_GPIO, OUTPUT);
+
+    lcd_init();
+    lcd_write("Iniciando...", "Aguarde...");
 
     // Abre a comunicação I2C com o ADS1115
     int handle = wiringPiI2CSetup(ADS1115_ADDR);
@@ -151,6 +204,11 @@ int main() {
             printf("Average dBFS: %6.1f dB (%d samples in %.2f s)\n", 
                    dbfs_avg, count, avg_elapsed_ns / 1000000000.0);
 
+            char lcd_line1[17], lcd_line2[17];
+            snprintf(lcd_line1, sizeof(lcd_line1), "Nivel Medio:");
+            snprintf(lcd_line2, sizeof(lcd_line2), "%6.1f dBFS", dbfs_avg);
+            lcd_write(lcd_line1, lcd_line2);
+
             if (dbfs_avg > dbfs_limit) {
                 printf("LED on...\n");
                 digitalWrite(LED_GPIO, HIGH);               
@@ -181,6 +239,9 @@ int main() {
         }
     }
 
+    lcd_send_byte(0x01, LCD_CMD);
+    usleep(2000);
+    lcd_write("Encerrando...", "Tchau!");
     printf("\nTerminando o programa.\n");
     return EXIT_SUCCESS;
 }
