@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+extern int lcd_fd;
+
 void lcd_init(void);
 
 void lcd_write(const char *line1, const char *line2);

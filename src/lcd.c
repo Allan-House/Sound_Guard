@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <wiringPiI2C.h>
 
-static int lcd_fd = -1;
+int lcd_fd = -1;
 
 void lcd_toggle_enable(uint8_t bits) {
     wiringPiI2CWrite(lcd_fd, bits | LCD_ENABLE | LCD_BACKLIGHT);
