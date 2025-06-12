@@ -10,5 +10,6 @@ Sound_Guard/
 ├── src/
     ├── main.c
     └── example.c
+├── .gitignore
 ├── CMakeLists.txt 
 └── README.md
