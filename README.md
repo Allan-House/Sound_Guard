@@ -86,8 +86,8 @@ O sistema utilizará o limite padrão de **-12.0 dBFS**.
 Para definir um limite específico:
 
 ```bash
-./Sound_Guard -16     # Define limite para -16.0 dBFS
-./Sound_Guard -20.5   # Define limite para -20.5 dBFS
+./Sound_Guard -l -16     # Define limite para -16.0 dBFS
+./Sound_Guard --limit -20.5   # Define limite para -20.5 dBFS
 ```
 
 ### Exemplos de Uso
