@@ -1,9 +1,10 @@
-#include "adc.h"
-#include "config.h"
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
 #include <wiringPiI2C.h>
+
+#include "adc.h"
+#include "config.h"
 
 int16_t swap_bytes(int16_t val) {
     return (val << 8) | ((val >> 8) & 0xFF);   

@@ -1,9 +1,10 @@
-#include "lcd.h"
-#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <wiringPiI2C.h>
+
+#include "lcd.h"
+#include "config.h"
 
 static int lcd_fd = -1;
 

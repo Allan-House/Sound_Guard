@@ -11,21 +11,24 @@
 #include "audio.h"
 #include "timing.h"
 
-volatile int keepRunning = 1;
+volatile int keep_running = 1;
 
-// Handler de sinal pra terminação limpa (Ctrl + C)
+// Handler de sinal para terminação limpa (Ctrl + C)
 void intHandler(int dummy) {
-    keepRunning = 0;
+    keep_running = 0;
 }
 
-int main() {
-    // Inicializa a biblioteca WiringPi para usar numeração BCM (GPIO direto)
+void print_usage(const char *program_name);
+
+int main(int argc, char *argv[]) {
+
+    float dbfs_limit = -12.0f;
+
     if (wiringPiSetupGpio() < 0) {
         fprintf(stderr, "Erro ao inicializar WiringPi.\n");
         return EXIT_FAILURE;
     }
     
-    // Ativa o handling de sinal pra terminação limpa (Ctrl + C)
     signal(SIGINT, intHandler);
 
     pinMode(LED_GPIO, OUTPUT);
@@ -33,7 +36,6 @@ int main() {
     lcd_init();
     lcd_write("Iniciando...", "Aguarde...");
 
-    // Abre a comunicação I2C com o ADS1115
     int adc_handle = adc_init();
     if (adc_handle < 0) {
         return EXIT_FAILURE;
@@ -42,7 +44,6 @@ int main() {
     printf("Iniciando leitura...\n");
     printf("Pressione Ctrl+C encerrar.\n");
 
-    float dbfs_limit = -12.0f;
     float dbfs_sum = 0.0f;
     float dbfs_avg = 0.0f;
     int count = 0;
@@ -51,17 +52,14 @@ int main() {
     struct timespec avg_start, avg_current;
     int avg_initialized = 0;
 
-    while (keepRunning) {
+    while (keep_running) {
         // Marca o início do loop
         clock_gettime(CLOCK_MONOTONIC, &loop_start);
 
-        // Calcula o valor RMS do sinal
         float rms = adc_calculate_rms(adc_handle);
         
-        // Cálculo do valor dBFS do sinal RMS
         float dbfs = audio_calculate_dbfs(rms);
         
-        // Imprime a barra visual com os valores de RMS e dBFS
         audio_print_bar(rms, dbfs);
         
         fflush(stdout);
@@ -80,7 +78,6 @@ int main() {
         long long avg_elapsed_ns = timespec_diff_ns(&avg_start, &avg_current);
         
         if (avg_elapsed_ns >= 1000000000LL) { // 1 segundo em nanosegundos
-            // Calcula a média
             dbfs_avg = dbfs_sum / count;
             printf("Average dBFS: %6.1f dB (%d samples in %.2f s)\n", 
                    dbfs_avg, count, avg_elapsed_ns / 1000000000.0);

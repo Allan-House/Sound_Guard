@@ -23,7 +23,6 @@ float audio_calculate_dbfs(float rms) {
 }
 
 int audio_calculate_bar_length(float normalized) {
-    // Calcula o comprimento da barra
     float norm_clamped = (normalized < MIN_NORMALIZED) ? MIN_NORMALIZED : normalized;
     int barLength = (int)((logf(norm_clamped) - logf(MIN_NORMALIZED)) / 
                           (-logf(MIN_NORMALIZED)) * BAR_WIDTH);
